@@ -1020,3 +1020,56 @@ public class StudentController {
 总结：
 
 - 注解方式IOC只是标记了那些类要被Spring管理
+
+#### 组件（Bean）作用域和周期方法
+
+**组件周期方法配置**
+
+```java
+@Component
+public class BeanOne {
+    @PostConstruct  //注解指定初始化方法
+    public void init(){
+        System.out.println("init ....");
+    }
+    @PreDestroy //注解指定销毁方法
+    public void destroy(){
+        System.out.println("destroy ....");
+    }
+}
+```
+
+测试
+
+```java
+    @Test
+    public void test02() {
+        BeanOne beanOne = applicationContext.getBean("beanOne", BeanOne.class);
+        applicationContext.close();
+    }
+```
+
+**组件作用域配置**
+
+```java
+@Component
+@Scope(scopeName = ConfigurableBeanFactory.SCOPE_PROTOTYPE)   //多例
+// @Scope(scopeName = ConfigurableBeanFactory.SCOPE_SINGLETON) //单列
+public class BeanTwo {
+   @PostConstruct
+    public void init(){
+        System.out.println("init ...");
+    }
+}
+```
+
+测试
+
+```java
+	public void test03(){
+        BeanTwo beanTwo = applicationContext.getBean(BeanTwo.class);
+        BeanTwo beanTwo1 = applicationContext.getBean(BeanTwo.class);
+        System.out.println(beanTwo1 == beanTwo); //false
+    }
+```
+
