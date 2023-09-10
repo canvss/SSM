@@ -542,6 +542,8 @@ public class BeanOne {
 //BeanOne正在销毁
 ```
 
+> 注意：周期方法命名随意，初始化方法和销毁方法只能是public void修饰的，没有行参。
+
 #### 组件（Bean）作用域方法配置
 
 Bean作用域概念：\<bean> 标签声明Bean，只是将Bean的信息配置交给SpringIoC容器。
@@ -585,4 +587,305 @@ public void testBeanOne2(){
         System.out.println(beanOne5 == beanOne4);   //false
     }
 ```
+
+#### FactoryBean特性和使用
+
+`FactoryBean`接口是Spring IoC容器实例化逻辑的可插拔特点。用于配置复杂的Bean对象，可以将创建存储在FactoryBean的getObect方法
+
+FactoryBean\<T> 接口提供三种方法：
+
+- T getObject()：返回此工厂创建的对象的实例。该返回值会被存储到IoC容器
+- boolean isSingleton()：如果此FactoryBean返回单列。则返回true。否则返回false。此方法的默认实现返回true（注意：lombok插件使用，可能影响效果）
+- Class<?> getObjectType()：返回getObject()方法返回的对象类型，如果事先不知道类型，则返回null
+
+![](imgs/451516165156.png)
+
+**FactoryBean使用场景**
+
+- 代理类的创建
+- 第三方框架整合
+- 复杂对象实例化等
+
+**FactoryBean应用**
+
+```java
+public class HappyMachine {
+    public String getMachineName() {
+        return machineName;
+    }
+
+    private String machineName;
+
+    public void setMachineName(String machineName) {
+        this.machineName = machineName;
+    }
+}
+```
+
+FactoryBean实现类
+
+```java
+public class HappyFactoryBean implements FactoryBean<HappyMachine> {
+    private String machineName;
+    public void setMachineName(String machineName) {
+        this.machineName = machineName;
+    }
+    @Override
+    public HappyMachine getObject() throws Exception {
+        HappyMachine happyMachine = new HappyMachine();
+        happyMachine.setMachineName(this.machineName);
+        return happyMachine;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        //返回要生产的对象的类型
+        return HappyMachine.class;
+    }
+}
+```
+
+xml配置FactoryBean实现类
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<!--  这个bean标签中class属性指定的是HappyFactoryBean，但是将来从这儿获取的bean是HappyMachine对象  -->
+    <bean id="happyMachine" class="com.canvs.ioc.ioc04.HappyFactoryBean">
+        <property name="machineName" value="canvs"/>
+    </bean>
+</beans>
+```
+
+测试获取FactoryBean和FactoryBean.getObject对象
+
+```java
+    public void testFactoryBean(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("Spring-ioc-xml-04.xml");
+        //直接根据FactoryBean的id，获取的是getObject方法返回的对象
+        HappyMachine happyMachine = applicationContext.getBean("happyMachine", HappyMachine.class);
+        System.out.println(happyMachine.getMachineName());
+        System.out.println(happyMachine);
+        //如果想要获取FactoryBean对象，直接在id前添加&符号即可
+        HappyFactoryBean bean = applicationContext.getBean("&happyMachine", HappyFactoryBean.class);
+        System.out.println(bean);
+    }
+```
+
+**FactoryBean和BeanFactory区别**
+
+FactoryBean是Spring中一种特殊的bean，可以在getObject()工厂方法自定义的逻辑创建Bean，是一种能够过生成其他Bean的Bean。FactoryBean 在容器启动时被创建，而在世纪使用时则是通过调用getObject()方法来得到其所生产的Bean。因此，FactoryBean可以自定义任何所需的初始化逻辑，生产出一些定制化的bean
+
+BeanFactory是Spring框架的基础，其作为一个顶级接口定义了容器的基本行为，例如管理bean的生命周期、配置文件的加载和解析、bean的装配和依赖注入等。BeanFactory接口提供了访问bean的方式，如getBean()方法获取指定的bean实例。它可以从不同的来源（如Mysql数据库、xml文件、Java配置类等）获取bean定义，并将其转换为bean实例。同时，BeanFactory还包含了很多子类（ApplicationContext接口）提供了额外的强大功能。
+
+总的来说，FactoryBean和BeanFactory的区别主要是在于前者用于创建bean的接口，它提供了更加灵活的初始化定制功能，而后者是用于管理bean的框架基础接口，提供了基本的容器功能和bean生命周期管理
+
+#### 基于XML方式整合三层架构组件
+
+数据库准备
+
+```sql
+CREATE DATABASE studb;
+
+use studb;
+
+CREATE TABLE students(
+	id INT PRIMARY KEY,
+	name VARCHAR(50) NOT NULL,
+	gender VARCHAR(10) NOT null,
+	age INT,
+	class VARCHAR(50)
+);
+
+INSERT INTO students(id,name,gender,age,class) VALUES
+(1, '张三', '男', 20, '高中一班'),
+  (2, '李四', '男', 19, '高中二班'),
+  (3, '王五', '女', 18, '高中一班'),
+  (4, '赵六', '女', 20, '高中三班'),
+  (5, '刘七', '男', 19, '高中二班'),
+  (6, '陈八', '女', 18, '高中一班'),
+  (7, '杨九', '男', 20, '高中三班'),
+  (8, '吴十', '男', 19, '高中二班');
+	
+SELECT id,name,gender,age,class AS classes FROM students;
+```
+
+POJO类准备
+
+```java
+public class Student {
+    private int id;
+    private String name;
+    private String gender;
+    private int age;
+    private String classes;
+    public Student() {
+    }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getGender() {
+        return gender;
+    }
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+    public int getAge() {
+        return age;
+    }
+    public void setAge(int age) {
+        this.age = age;
+    }
+    public String getClasses() {
+        return classes;
+    }
+    public void setClasses(String classes) {
+        this.classes = classes;
+    }
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", gender='" + gender + '\'' +
+                ", age=" + age +
+                ", classes='" + classes + '\'' +
+                '}';
+    }
+}
+
+```
+
+持久层
+
+```java
+public interface StudentDAO {
+    List<Student> getAll();
+}
+public class StudentDAOImpl implements StudentDAO {
+    private JdbcTemplate jdbcTemplate;
+
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+    @Override
+    public List<Student> getAll() {
+        String sql = "SELECT id,name,gender,age,class AS classes FROM students";
+        List<Student> studentList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Student.class));
+        return studentList;
+    }
+}
+```
+
+业务层
+
+```java
+public interface StudentService {
+    List<Student> getAll();
+}
+public class StudentServiceImpl implements StudentService{
+    private StudentDAO studentDAO;
+    public void setStudentDAO(StudentDAO studentDAO) {
+        this.studentDAO = studentDAO;
+    }
+    @Override
+    public List<Student> getAll() {
+        return studentDAO.getAll();
+    }
+}
+```
+
+表述层
+
+```java
+public class StudentController {
+    private StudentService studentService;
+
+    public void setStudentService(StudentService studentService) {
+        this.studentService = studentService;
+    }
+
+    public void getAll() {
+        List<Student> all = studentService.getAll();
+        System.out.println("表述层：" + all);
+    }
+}
+```
+
+三层架构IoC的xml配置
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 导入外部属性文件   -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!-- 配置数据源   -->
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="url" value="${url}"/>
+        <property name="driverClassName" value="${driver}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+    <!--配置JdbcTemplate-->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="druidDataSource"/>
+    </bean>
+
+    <bean id="studentDAO" class="com.canvs.ioc.practice.StudentDAOImpl">
+        <property name="jdbcTemplate" ref="jdbcTemplate"/>
+    </bean>
+    <bean id="studentService" class="com.canvs.ioc.practice.StudentServiceImpl">
+        <property name="studentDAO" ref="studentDAO"/>
+    </bean>
+    <bean id="studentController" class="com.canvs.ioc.practice.StudentController">
+        <property name="studentService" ref="studentService"/>
+    </bean>
+</beans>
+```
+
+测试
+
+```java
+public void test(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("Spring-ioc-xml-practice.xml");
+        StudentController studentController = applicationContext.getBean(StudentController.class);
+        studentController.getAll();
+    }
+```
+
+总结：
+
+- 注入的属性必须要添加setter方法、代码结构乱
+- 配置文件和java代码分离、编写不方便
+- XML配置文件解析效率低
+
+### 基于注解方式管理Bean
+
+####  Bean注解标记和扫描（IoC）
+
+注解和XML配置文件一样，注解本身并不能执行，注解本身仅仅只是做了一个标记，具体的功能是框架检测到注解标记的位置，然后针对这个位置按照注解标记的功能来执行具体操作。
+
+本质上：所有一切的操作都是Java代码来 完成的，XML和注解只是告诉框架中的Java代码如何执行。
+
+**扫描**
+
+Spring为了知道开发人员在哪些地方标记了什么注解，就需要通过扫描的方式，来进行检测。然后根据注解进行后续操作。
 
