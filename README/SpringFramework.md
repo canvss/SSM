@@ -185,7 +185,7 @@ Spring框架提供了多种配置方式：XML配置方式、注解方式和Java�
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="happyComponent" class="com.canvs.ioc.ioc01.HappyComponent"/>
+    <bean id="happyComponent" class="ioc01.com.canvs.ioc.ioc01.HappyComponent"/>
 </beans>
 ```
 
@@ -250,7 +250,7 @@ public class HappyComponent {
 xml配置文件
 
 ```xml
-<bean id="happyComponent" class="com.canvs.ioc.ioc01.HappyComponent"/>
+<bean id="happyComponent" class="ioc01.com.canvs.ioc.ioc01.HappyComponent"/>
 ```
 
 测试
@@ -280,7 +280,7 @@ public class ClientService {
 xml配置文件
 
 ```xml
-<bean id="clientService" class="com.canvs.ioc.ioc01.ClientService" factory-method="createInstance"/>
+<bean id="clientService" class="ioc01.com.canvs.ioc.ioc01.ClientService" factory-method="createInstance"/>
 ```
 
 - factory-method：指定静态工厂方法，该方法必须是**static**方法
@@ -305,7 +305,7 @@ public class DefaultServiceLocator {
 ```
 
 ```xml
-<bean id="defaultServiceLocator" class="com.canvs.ioc.ioc01.DefaultServiceLocator"/>
+<bean id="defaultServiceLocator" class="ioc01.com.canvs.ioc.ioc01.DefaultServiceLocator"/>
     <bean id="clientService1" factory-bean="defaultServiceLocator" factory-method="createClientService"/>
 ```
 
@@ -347,8 +347,8 @@ xml配置
 - constructor-arg标签：可以引用构造参数ref引用其他bean的标识
 
 ```xml
-  <bean id="userDao" class="com.canvs.ioc.ioc02.UserDao"/>
-    <bean id="userService" class="com.canvs.ioc.ioc02.UserService">
+  <bean id="userDao" class="ioc02.com.canvs.ioc.ioc01.UserDao"/>
+    <bean id="userService" class="ioc02.com.canvs.ioc.ioc01.UserService">
         <constructor-arg name="userDao" ref="userDao"/>
     </bean>
 ```
@@ -398,7 +398,7 @@ xml配置文件
 - constructor-arg标签：name属性指定参数名、index属性指定参数角标、value属性指定普通属性值
 
 ```xml
- <bean id="userService2" class="com.canvs.ioc.ioc02.UserService">
+ <bean id="userService2" class="ioc02.com.canvs.ioc.ioc01.UserService">
         <constructor-arg name="userDao" ref="userDao"/>
         <constructor-arg name="id" value="1001"/>
         <constructor-arg name="name" value="canvs"/>
@@ -410,7 +410,7 @@ xml配置文件
 ```java
 public void testUserService2(){
         UserService userService1 = context.getBean("userService2", UserService.class);
-        System.out.println(userService1);   //UserService{userDao=com.canvs.ioc.ioc02.UserDao@c333c60, id=1001, name='canvs'}
+        System.out.println(userService1);   //UserService{userDao=ioc02.com.canvs.ioc.ioc01.UserDao@c333c60, id=1001, name='canvs'}
     }
 ```
 
@@ -445,8 +445,8 @@ xml配置文件
 - property标签：name属性代表set方法标识、ref代表引用bean的标识id、value属性表示基本属性值
 
 ```xml
-<bean class="com.canvs.ioc.ioc02.MovieFinder" id="movieFinder"/>
-    <bean class="com.canvs.ioc.ioc02.SimpleMovieLister" id="simpleMovieLister">
+<bean class="ioc02.com.canvs.ioc.ioc01.MovieFinder" id="movieFinder"/>
+    <bean class="ioc02.com.canvs.ioc.ioc01.SimpleMovieLister" id="simpleMovieLister">
         <property name="movieFinder" ref="movieFinder"/>
         <property name="movieName" value="喜剧之王"/>
     </bean>
@@ -525,7 +525,7 @@ public class BeanOne {
 周期方法配置
 
 ```xml
-<bean id="beanOne" class="com.canvs.ioc.ioc03.BeanOne" init-method="init" destroy-method="destroy"/>
+<bean id="beanOne" class="ioc03.com.canvs.ioc.ioc01.BeanOne" init-method="init" destroy-method="destroy"/>
 ```
 
 测试
@@ -570,8 +570,8 @@ xml配置scope
 
 ```xml
  <!--  scope默认值是singleton   -->
-    <bean id="beanOne2" class="com.canvs.ioc.ioc03.BeanOne" scope="singleton"/>
-    <bean id="beanOne3" class="com.canvs.ioc.ioc03.BeanOne" scope="prototype"/>
+    <bean id="beanOne2" class="ioc03.com.canvs.ioc.ioc01.BeanOne" scope="singleton"/>
+    <bean id="beanOne3" class="ioc03.com.canvs.ioc.ioc01.BeanOne" scope="prototype"/>
 ```
 
 测试
@@ -654,7 +654,7 @@ xml配置FactoryBean实现类
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
 <!--  这个bean标签中class属性指定的是HappyFactoryBean，但是将来从这儿获取的bean是HappyMachine对象  -->
-    <bean id="happyMachine" class="com.canvs.ioc.ioc04.HappyFactoryBean">
+    <bean id="happyMachine" class="ioc04.com.canvs.ioc.ioc01.HappyFactoryBean">
         <property name="machineName" value="canvs"/>
     </bean>
 </beans>
@@ -849,13 +849,13 @@ public class StudentController {
         <property name="dataSource" ref="druidDataSource"/>
     </bean>
 
-    <bean id="studentDAO" class="com.canvs.ioc.practice.StudentDAOImpl">
+    <bean id="studentDAO" class="practice.com.canvs.ioc.ioc01.StudentDAOImpl">
         <property name="jdbcTemplate" ref="jdbcTemplate"/>
     </bean>
-    <bean id="studentService" class="com.canvs.ioc.practice.StudentServiceImpl">
+    <bean id="studentService" class="practice.com.canvs.ioc.ioc01.StudentServiceImpl">
         <property name="studentDAO" ref="studentDAO"/>
     </bean>
-    <bean id="studentController" class="com.canvs.ioc.practice.StudentController">
+    <bean id="studentController" class="practice.com.canvs.ioc.ioc01.StudentController">
         <property name="studentService" ref="studentService"/>
     </bean>
 </beans>
@@ -1071,5 +1071,849 @@ public class BeanTwo {
         BeanTwo beanTwo1 = applicationContext.getBean(BeanTwo.class);
         System.out.println(beanTwo1 == beanTwo); //false
     }
+```
+
+#### Bean属性赋值：引用类型自动装配（DI）
+
+**@Autowired注解**：在成员变量上直接标记@Autowired注解即可，不需要提供setXxx()方法。
+
+标记位置：
+
+- 成员变量
+
+```java
+@Controller
+public class SoldierController {
+    @Autowired
+    private SoldierService soldierService;
+    public void show(){
+        soldierService.show();
+    }
+}
+```
+
+- 构造器
+
+```java
+@Controller
+public class SoldierController {
+//    @Autowired
+    private SoldierService soldierService;
+    public void show(){
+        soldierService.show();
+    }
+
+    @Autowired
+    public SoldierController(SoldierService soldierService){
+        this.soldierService = soldierService;
+    }
+}
+```
+
+- set方法
+
+```java
+@Controller
+public class SoldierController {
+//    @Autowired
+    private SoldierService soldierService;
+    public void show(){
+        soldierService.show();
+    }
+
+//    @Autowired
+    public SoldierController(SoldierService soldierService){
+        this.soldierService = soldierService;
+    }
+
+    @Autowired
+    public void setSoldierService(SoldierService soldierService) {
+        this.soldierService = soldierService;
+    }
+}
+```
+
+**工作流程**
+
+<img src="imgs/51515615151.png"  />
+
+- 首先根据所需要的组件类型到IOC容器中查找
+  - 能够找到唯一的bean：直接执行装配
+  - 如果完全找不到匹配这个类型的bean：装配失败
+  - 找到和所需类型匹配的bean不止一个
+    - 没有@Qualifier注解：根据@Autowired标记位置成员变量名作为bena的id进行匹配
+      - 能够找到：执行装配
+      - 找不到：装配失败
+    - 使用@Qualifier注解：根据@Qualifier注解中指定的名字作为bean的id进行匹配
+      - 能够找到：执行装配
+      - 找不到：装配失败
+
+```java
+public class SoldierService {
+    @Autowired
+    @Qualifier(value = "soldierServie")
+    private SoldierDAO soldierDAO;
+}
+```
+
+**佛系装配**
+
+给@Autowired注解设置required = false属性表示：能装就装，装不上在使用的过程中抛空指针异常
+
+```java
+@Controller
+public class SoldierController {
+    @Autowired(required = false)
+    private SoldierService soldierService;
+ }
+```
+
+#### 扩展JSR-250注解@Resource
+
+JSR(Java Specification Request)是Java平台标准化进程中的一种技术规范，而JSR注解是其中一部分重要的内容。
+
+- JSR-175：这个JSR是Java SE 5引入的，是Java注解最早的规范化版本，Java SE 5后的版本中都包含该JSR中定义的注解。主要包括以下几种标准注解：
+  - @Deprecated: 标识一个程序元素（如类、方法或字段）已过时，并且在将来的版本中可能会被删除。
+  - @Override: 标识一个方法重写了父类中的方法。
+  - @SuppressWarnings: 抑制编译时产生的警告消息。
+  - @SafeVarargs: 标识一个有安全性警告的可变参数方法。
+  - @FunctionalInterface: 标识一个接口只有一个抽象方法，可以作为lambda表达式的目标。
+- JSR-250: 这个JSR主要用于在Java EE 5中定义一些支持注解。该JSR主要定义了一些用于进行对象管理的注解，包括：
+  - @Resource: 标识一个需要注入的资源，是实现Java EE组件之间依赖关系的一种方式。
+  - @PostConstruct: 标识一个方法作为初始化方法。
+  - @PreDestroy: 标识一个方法作为销毁方法。
+  - @Resource.AuthenticationType: 标识注入的资源的身份验证类型。
+  - @Resource.AuthenticationType: 标识注入的资源的默认名称
+- JSR-269: 这个JSR主要是Java SE 6中引入的一种支持编译时元数据处理的框架，即使用注解来处理Java源文件。该JSR定义了一些可以用注解标记的注解处理器，用于生成一些元数据，常用的注解有：
+  - @SupportedAnnotationTypes: 标识注解处理器所处理的注解类型。
+  - @SupportedSourceVersion: 标识注解处理器支持的Java源码版本。
+- JSR-330: 该JSR主要为Java应用程序定义了一个依赖注入的标准，即Java依赖注入标准（javax.inject）。在此规范中定义了多种注解，包括：
+  - @Named: 标识一个被依赖注入的组件的名称。
+  - @Inject: 标识一个需要被注入的依赖组件。
+  - @Singleton: 标识一个组件的生命周期只有一个唯一的实例。
+- JSR-250: 这个JSR主要是Java EE 5中定义一些支持注解。该JSR包含了一些支持注解，可以用于对Java EE组件进行管理，包括：
+  - @RolesAllowed: 标识授权角色
+  - @PermitAll: 标识一个活动无需进行身份验证。
+  - @DenyAll: 标识不提供针对该方法的访问控制。
+  - @DeclareRoles: 声明安全角色。
+
+> JSR是Java提供的技术规范，也就是说，它只是规定了注解和注解的含义，JSR并不是直接提供特定的实现，而是提供标准和指导方针，由第三方框架（Spring）和库来实现和提供对应的功能
+
+**JSR-250 @Resource注解**
+
+- @Resource注解是JDK扩展包中的，也就是说属于JDK的一部分。所以该注解是标准注解，更加具有通用性。(JSR-250标准中制定的注解类型。JSR是Java规范提案。)
+- @Autowired注解是Spring框架自己的。
+- @Resource注解默认根据Bean名称装配，未指定name时，使用属性名作为name。通过name找不到的话会自动启动通过类型装配。
+- @Autowired注解默认根据类型装配，如果想根据名称装配，需要配合@Qualifier注解一起用。
+- @Autowired注解默认根据类型装配，如果想根据名
+- @Autowired注解用在属性上、setter方法上、构造方法上、构造方法参数上。
+
+> @Resource注解属于JDK扩展包，所以不在JDK当中，需要额外引入以下依赖：【高于JDK11或低于JDK8需要引入以下依赖】
+>
+> ```xml
+> <dependency>
+>     <groupId>jakarta.annotation</groupId>
+>     <artifactId>jakarta.annotation-api</artifactId>
+>     <version>2.1.1</version>
+> </dependency>
+> ```
+
+```java
+@Controller
+public class UserController {
+  	//@Resource(name = "指定beanName")
+    @Resource
+    private UserService userService;
+    public void show(){
+        System.out.println(userService);
+    }
+}
+interface UserService{ }
+@Service
+class UserServiceImpl implements UserService{ }
+```
+
+#### 基本类型属性赋值（DI）
+
+`@Value`通常用于注入外部属性
+
+xml引入外部配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.canvs.ioc.ioc04"/>
+    <context:property-placeholder location="classpath:application.properties"/>
+</beans>
+```
+
+```java
+@Component
+public class CommonComponent {
+    //${key} 取外部配置key对应的值
+    //${key:defaultValue} 没有key,可以给与默认值
+    @Value("${name:root}")
+    private String name;
+    private String city;
+
+    @Value("${city:上海}")
+    public void setCity(String city) {
+        this.city = city;
+    }
+}
+```
+
+```java
+    @Test
+    public void test(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("Spring-ioc-annotation-04.xml");
+        CommonComponent commonComponent = applicationContext.getBean(CommonComponent.class);
+        System.out.println(commonComponent);  //CommonComponent{name='canvs', city='上海'}
+    }
+```
+
+#### 基于注解+xml方式整合三层架构组件
+
+![](imgs/awda4151561556.png)
+
+POJO实体类
+
+```java
+public class Student {
+    private int id;
+    private String name;
+    private String gender;
+    private int age;
+    private String classes;
+    public Student() {
+    }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getGender() {
+        return gender;
+    }
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+    public int getAge() {
+        return age;
+    }
+    public void setAge(int age) {
+        this.age = age;
+    }
+    public String getClasses() {
+        return classes;
+    }
+    public void setClasses(String classes) {
+        this.classes = classes;
+    }
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", gender='" + gender + '\'' +
+                ", age=" + age +
+                ", classes='" + classes + '\'' +
+                '}';
+    }
+}
+```
+
+持久层
+
+```java
+@Repository
+public class StudentDAOImpl implements StudentDAO {
+    @Resource
+    private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public List<Student> getAll() {
+        String sql = "SELECT id,name,gender,age,class AS classes FROM students";
+        List<Student> studentList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Student.class));
+        return studentList;
+    }
+}
+```
+
+业务层
+
+```java
+@Service
+public class StudentServiceImpl implements StudentService{
+    @Resource
+    private StudentDAO studentDAO;
+    @Override
+    public List<Student> getAll() {
+        return studentDAO.getAll();
+    }
+}
+```
+
+表述层
+
+```java
+@Controller
+public class StudentController {
+    @Resource
+    private StudentService studentService;
+
+    public void getAll() {
+        List<Student> all = studentService.getAll();
+        System.out.println("表述层：" + all);
+    }
+}
+```
+
+IOC配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.canvs.ioc.practice"/>
+    <context:property-placeholder location="druid.properties"/>
+    <bean class="com.alibaba.druid.pool.DruidDataSource" id="druidDataSource">
+        <property name="url" value="${url}"/>
+        <property name="driverClassName" value="${driver}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+    <bean class="org.springframework.jdbc.core.JdbcTemplate" id="jdbcTemplate">
+        <property name="dataSource" ref="druidDataSource"/>
+    </bean>
+</beans>
+```
+
+测试
+
+```java
+   public void test(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("Spring-ioc-annotation-practice.xml");
+        StudentController studentController = applicationContext.getBean(StudentController.class);
+        studentController.getAll();
+    }
+```
+
+### 基于配置类方式管理Bean
+
+#### 完全注解开发理解
+
+Spring完全注解配置（Fully Annotation-based Configuration）是指通过Java配置类代码来配置Spring应用程序，使用注解来替代原本在XML配置文件中的配置。相对于XML配置，完全注解配置具有更强的类型安全性和更好的可读性。
+
+#### 配置类和扫描注解
+
+@Configuration注解将一个普通的类标记为Spring的配置类
+
+配置类
+
+```java
+@Configuration  //标注当前类是配置类
+@PropertySource("classpath:jdbc.properties")    //使用注解读取外部配置，替代<context:property-placeholder>
+@ComponentScan(basePackages = "com.canvs.ioc.ioc01")    //可以配置扫描包，替代<context:component-scan>
+public class SpringConfiguration {
+}
+```
+
+组件
+
+```java
+@Controller
+public class UserController {
+    @Resource
+    private UserService userService;
+    public void show(){
+        System.out.println(userService);
+    }
+}
+
+interface UserService{ }
+@Service
+class UserServiceImpl implements UserService{ }
+```
+
+测试
+
+```java
+public class ConfigurationClassTest {
+    @Test
+    public void test(){
+        // AnnotationConfigApplicationContext-IOC容器对象
+        AnnotationConfigApplicationContext configApplicationContext = new AnnotationConfigApplicationContext(SpringConfiguration.class);
+        UserController userController = configApplicationContext.getBean(UserController.class);
+        userController.show();
+    }
+    @Test
+    public void test2(){
+        AnnotationConfigApplicationContext configApplicationContext = new AnnotationConfigApplicationContext();
+        configApplicationContext.register(SpringConfiguration.class);   //外部设置配置类
+        configApplicationContext.refresh(); //刷新后方可生效
+        UserController userController = configApplicationContext.getBean(UserController.class);
+        userController.show();
+    }
+}
+```
+
+总结：
+
+- @Configuration指定一个类为配置类，可以添加配置注解，代替配置XML文件
+- @ComponentScan(basePackages={"package1","package2",...})：实现注解扫描
+- @PropertySource("classpath:配置文件")：配合IoC/DI注解，可以完全注解开发
+
+#### @Bean定义组件
+
+**场景需求**：将Druid连接池对象存储到IoC容器
+
+**需求分析**：第三方jar包的类，添加到IoC容器，无法使用@Component等相关注解，因为源码jar包内容为只读模式
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.canvs.ioc.ioc02")
+@PropertySource("classpath:jdbc.properties")
+public class SpringConfiguration {
+    @Bean
+    public DruidDataSource druidDataSource(@Value("${url}") String url,
+                                           @Value("${driver}") String driver,
+                                           @Value("${username}") String username,
+                                           @Value("${password}") String password) {
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setUrl(url);
+        druidDataSource.setDriverClassName(driver);
+        druidDataSource.setUsername(username);
+        druidDataSource.setPassword(password);
+        return druidDataSource;
+    }
+    @Bean
+    public JdbcTemplate jdbcTemplate(DruidDataSource druidDataSource){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(druidDataSource);
+        return jdbcTemplate;
+    }
+}
+```
+
+#### @Bean注解细节
+
+**@Bean生成BeanName问题**
+
+```java
+public @interface Bean {
+    //前两个注解可以指定Bean的标识
+    @AliasFor("name")
+    String[] value() default {};
+    @AliasFor("value")
+    String[] name() default {};
+  
+    //autowireCandidate 属性来指示该 Bean 是否候选用于自动装配。
+    //autowireCandidate 属性默认值为 true，表示该 Bean 是一个默认的装配目标，
+    //可被候选用于自动装配。如果将 autowireCandidate 属性设置为 false，则说明该 Bean 不是默认的装配目标，不会被候选用于自动装配。
+    boolean autowireCandidate() default true;
+
+    //指定初始化方法
+    String initMethod() default "";
+    //指定销毁方法
+    String destroyMethod() default "(inferred)";
+}
+```
+
+指定@Bean的名称
+
+```java
+@Configuration
+public class SpringConfiguration {
+    @Bean("user")   //指定名称
+    public User user(){
+        return new User();
+    }
+}
+public class User{}
+```
+
+@Bean注释方法。使用此方法在指定的方法返回值的类型的ApplicationContext中注册Bean定义。缺省情况下，Bean名称与方法名称相同。
+
+```java
+	 @Bean		
+    public Book book(){
+        return new Book();
+    }
+```
+
+等同于XML配置
+
+```xml
+<bean id="book" class="com.canvs.ioc.ioc2.Book"/>
+```
+
+**@Bean初始化和销毁方法指定**
+
+@Bean注解支持指定任意初始化和销毁回调方法，非常类似于Spring XML在Bean元素上的init-method和destroy-method属性
+
+```java
+public class BeanOne {
+    public void init() {
+        System.out.println("init ...");
+    }
+
+    public void destroy() {
+        System.out.println("destroy ...");
+    }
+}
+```
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.canvs.ioc.ioc03")
+public class AppConfig {
+    @Bean(initMethod = "init",destroyMethod = "destroy")
+    public BeanOne beanOne(){
+        return new BeanOne();
+    }
+}
+```
+
+**@Bean Scope作用域**
+
+可以指定使用@Bean注释定义的bean应具有特定范围。可以使用在Bean作用域部分中指定的任何标准作用域
+
+```java
+@Configuration
+public class ScopeConfig {
+    @Bean
+    @Scope("prototype")
+    public BeanOne beanOne(){
+        return new BeanOne();
+    }
+    @Bean
+    @Scope("singleton")
+    public BeanOne beanOne1(){
+        return new BeanOne();
+    }
+}
+```
+
+```java
+    public void test04(){
+        AnnotationConfigApplicationContext configApplicationContext = new AnnotationConfigApplicationContext(ScopeConfig.class);
+        BeanOne beanOne = configApplicationContext.getBean("beanOne", BeanOne.class);
+        BeanOne beanOne2 = configApplicationContext.getBean("beanOne", BeanOne.class);
+        System.out.println(beanOne2 == beanOne);    //false
+        BeanOne beanOne3 = configApplicationContext.getBean("beanOne1", BeanOne.class);
+        BeanOne beanOne4 = configApplicationContext.getBean("beanOne1", BeanOne.class);
+        System.out.println(beanOne3 == beanOne4); //true
+    }
+```
+
+**@Bean方法之间的依赖**
+
+```java
+public class UserServiceImpl {
+}
+
+```
+
+```java
+public class UserController {
+    public void setUserService(UserServiceImpl userService) {
+        this.userService = userService;
+    }
+
+    private UserServiceImpl userService;
+}
+```
+
+```java
+@Configuration
+public class UserConfig {
+    @Bean
+    public UserServiceImpl userService(){
+        return new UserServiceImpl();
+    }
+    @Bean
+    public UserController userController(){
+        UserController userController = new UserController();
+        userController.setUserService(userService());
+        return userController;
+    }
+}
+```
+
+#### @Import扩展
+
+@Import注释允许从另一个配置类加载@Bean定义
+
+```java
+public class Person {
+}
+public class Student {
+}
+```
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.canvs.ioc.ioc04")
+public class ConfigA {
+    @Bean
+    public Person person(){
+        return new Person();
+    }
+}
+@Configuration
+@Import(ConfigA.class)
+@ComponentScan(basePackages = "com.canvs.ioc.ioc04")
+public class ConfigB {
+    @Bean
+    public Student student(){
+        return new Student();
+    }
+}
+```
+
+```java
+    public void test06(){
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConfigB.class);
+        Person person = context.getBean(Person.class);
+        Student student = context.getBean(Student.class);
+        System.out.println(person);
+        System.out.println(student);
+    }
+```
+
+#### 基于注解+配置类方式整个三层架构组件
+
+POJO实体类
+
+```java
+public class Student {
+    private int id;
+    private String name;
+    private String gender;
+    private int age;
+    private String classes;
+
+    public Student() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getClasses() {
+        return classes;
+    }
+
+    public void setClasses(String classes) {
+        this.classes = classes;
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", gender='" + gender + '\'' +
+                ", age=" + age +
+                ", classes='" + classes + '\'' +
+                '}';
+    }
+}
+```
+
+持久化层
+
+```java
+@Repository
+public class StudentDAOImpl implements StudentDAO {
+
+    @Resource
+    private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public List<Student> getAll() {
+        String sql = "SELECT id,name,gender,age,class AS classes FROM students";
+        List<Student> studentList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Student.class));
+        return studentList;
+    }
+}
+```
+
+业务层
+
+```java
+@Service
+public class StudentServiceImpl implements StudentService{
+    @Resource
+    private StudentDAO studentDAO;
+    @Override
+    public List<Student> getAll() {
+        return studentDAO.getAll();
+    }
+}
+```
+
+表述层
+
+```java
+@Controller
+public class StudentController {
+    @Resource
+    private StudentService studentService;
+
+    public void getAll() {
+        List<Student> all = studentService.getAll();
+        System.out.println("表述层：" + all);
+    }
+}
+```
+
+配置类
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.canvs.ioc.practice")
+@PropertySource("classpath:jdbc.properties")
+public class PracticeConfig {
+    @Value("${url}")
+    private String url;
+    @Value("${driver}")
+    private String driver;
+    @Value("${username}")
+    private String username;
+    @Value("${password}")
+    private String password;
+
+    @Bean(destroyMethod = "close")
+    public DruidDataSource druidDataSource(){
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setUsername(username);
+        druidDataSource.setUrl(url);
+        druidDataSource.setDriverClassName(driver);
+        druidDataSource.setPassword(password);
+        return  druidDataSource;
+    }
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public JdbcTemplate jdbcTemplate(){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(druidDataSource());
+        return jdbcTemplate;
+    }
+}
+```
+
+#### 三种配置方式总结
+
+- XML方式配置
+
+  - 所有内容写到XML格式配置文件中
+
+  - 声明bean通过\<bean>标签
+
+  - <bean 标签包含基本信息(id,class)和属性<property name value/ref
+
+  - 引入外部的properties文件可以通过\<context:property-placeholder/>
+
+  - IoC具体容器实现选择ClassPathXmlApplicationContext对象
+
+- XML+注解方式
+
+  - 注解负责标记IoC的类和进行属性装配
+  - xml文件依然需要，需要通过\<context:component-scan/>标签指定注解范围
+  - 标记IoC注解：@Component、@Service、@Controller、@Repository
+  - 标记DI注解：@Autowired、@Qualifier、@Resource、@Value
+  - IoC具体容器实现选择ClassPathXmlApplicationContext对象
+
+- 完全注解方式配置
+
+  - 完全注解方式指的是去掉xml文件，使用配置类+注解实现
+  - xml文件替换成使用@Configuration注解标记的类
+  - 标记IoC注解：@Component、@Service、@Controller、@Repository
+  - 标记DI注解：@Autowired、@Qualifier、@Resource、@Value
+  - <context:component-scan标签指定注解范围使用@ComponentScan(basePackages={"com.canvs.components"})代替
+  - <context:property-placeholder引入外部配置文件使用@PropertySource({"classpath:application.properties","classpath:application.properties"...})
+  - <bean 标签使用@Bean注解和方法实现
+  - IoC具体容器实现选择AnnotationConfigApplicationContext对象
+
+### 整合Spring5-Test5搭建测试环境
+
+#### 整合测试环境的好处
+
+- 不需要自己创建IOC容器对象
+- 任何需要的bean都可用在测试类中直接享受自动装配
+
+**导入相关依赖**
+
+```xml
+<!--junit5测试-->
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-api</artifactId>
+    <version>5.3.1</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-test</artifactId>
+    <version>6.0.6</version>
+    <scope>test</scope>
+</dependency>
+```
+
+**整合测试注解使用**
+
+```java
+@SpringJUnitConfig(value = {PracticeConfig.class})
+public class Junit5IntegrationTest {
+    @Autowired
+    private StudentController studentController;
+    @Test
+    public void test(){
+        studentController.getAll();
+    }
+}
 ```
 

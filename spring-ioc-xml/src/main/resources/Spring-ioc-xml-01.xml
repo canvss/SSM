@@ -3,9 +3,9 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="happyComponent" class="com.canvs.ioc.ioc01.HappyComponent"/>
+    <bean id="happyComponent" class="com.canvs.ioc.ioc01.ioc01.HappyComponent"/>
 
-    <bean id="clientService" class="com.canvs.ioc.ioc01.ClientService" factory-method="createInstance"/>
-    <bean id="defaultServiceLocator" class="com.canvs.ioc.ioc01.DefaultServiceLocator"/>
+    <bean id="clientService" class="com.canvs.ioc.ioc01.ioc01.ClientService" factory-method="createInstance"/>
+    <bean id="defaultServiceLocator" class="com.canvs.ioc.ioc01.ioc01.DefaultServiceLocator"/>
     <bean id="clientService1" factory-bean="defaultServiceLocator" factory-method="createClientService"/>
 </beans>

@@ -3,10 +3,10 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="beanOne" class="com.canvs.ioc.ioc03.BeanOne" init-method="init" destroy-method="destroy"/>
+    <bean id="beanOne" class="com.canvs.ioc.ioc01.ioc03.BeanOne" init-method="init" destroy-method="destroy"/>
 
     <!--  scope默认值是singleton   -->
-    <bean id="beanOne2" class="com.canvs.ioc.ioc03.BeanOne" scope="singleton"/>
-    <bean id="beanOne3" class="com.canvs.ioc.ioc03.BeanOne" scope="prototype"/>
+    <bean id="beanOne2" class="com.canvs.ioc.ioc01.ioc03.BeanOne" scope="singleton"/>
+    <bean id="beanOne3" class="com.canvs.ioc.ioc01.ioc03.BeanOne" scope="prototype"/>
 
 </beans>

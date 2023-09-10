@@ -20,13 +20,13 @@
         <property name="dataSource" ref="druidDataSource"/>
     </bean>
 
-    <bean id="studentDAO" class="com.canvs.ioc.practice.StudentDAOImpl">
+    <bean id="studentDAO" class="practice.com.canvs.ioc.ioc01.StudentDAOImpl">
         <property name="jdbcTemplate" ref="jdbcTemplate"/>
     </bean>
-    <bean id="studentService" class="com.canvs.ioc.practice.StudentServiceImpl">
+    <bean id="studentService" class="practice.com.canvs.ioc.ioc01.StudentServiceImpl">
         <property name="studentDAO" ref="studentDAO"/>
     </bean>
-    <bean id="studentController" class="com.canvs.ioc.practice.StudentController">
+    <bean id="studentController" class="practice.com.canvs.ioc.ioc01.StudentController">
         <property name="studentService" ref="studentService"/>
     </bean>
 </beans>
