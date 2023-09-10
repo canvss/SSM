@@ -889,3 +889,134 @@ public void test(){
 
 Spring为了知道开发人员在哪些地方标记了什么注解，就需要通过扫描的方式，来进行检测。然后根据注解进行后续操作。
 
+**组件标记主机和区别**
+
+Spring提供了多个注解，这些注解可以直接标注在Java类上，将它们定义为Spring Bean
+
+| 注解        | 说明                                                         |
+| ----------- | ------------------------------------------------------------ |
+| @Component  | 该注解用于描述Spring中的Bean，它是一个泛化的概念，仅仅表示容器中的一个组件（Bean），并且可以作用在应用的任何层次。例如Service层、DAO层等。使用时只需要将该注解标注在相应的类上即可 |
+| @Repository | 该注解用于数据访问层（DAO层）的类标识为Spring中的Bean，其功能与@Component相同 |
+| @Service    | 该注解通常作用在业务层（Service层），用于业务层的类标识为Spring中的Bean，其功能与@Component相同 |
+| @Controller | 该注解通常作用在控制层（如SpringMVC的Controller），用于将控制层的类标识为Spring中的Bean，其功能与@Component相同 |
+
+通过查看源码得知，@Controller、@Service、@Repository这三个注解只是在@Component注解的基础上起了三个新的名字。
+
+对于Spring使用IOC容器管理这些组件来说没有区别，也就是语法层面没有区别。所以@Controller、@Service、@Repository这三个注解只是给开发人员看的，让我们能够便于分辨组件的作用
+
+注意：虽然它们本质上一样，但是为了代码的可读性、程序结构严谨。不能随便胡乱标记
+
+**普通组件**
+
+```java
+@Component
+public class CommonComponent {
+    public void show(){
+        System.out.println("CommonComponent ... ");
+    }
+}
+```
+
+**Controller组件**
+
+```java
+@Controller
+public class UserController {
+    public void show(){
+        System.out.println("UserController ... ");
+    }
+}
+```
+
+**Service组件**
+
+```java
+@Service
+public class UserServiceImpl {
+    public void show(){
+        System.out.println("UserServiceImpl ... ");
+    }
+}
+```
+
+**DAO组件**
+
+```java
+@Repository
+public class UserDAOImpl {
+    public void show(){
+        System.out.println("UserDAOImpl ... ");
+    }
+}
+```
+
+**测试**
+
+```java
+    public void test(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("Spring-ioc-annotation-01.xml");
+        CommonComponent commonComponent = applicationContext.getBean(CommonComponent.class);
+        commonComponent.show(); //CommonComponent ...
+        UserController userController = applicationContext.getBean(UserController.class);
+        userController.show();  //UserController ...
+        UserServiceImpl userService = applicationContext.getBean(UserServiceImpl.class);
+        userService.show(); //UserServiceImpl ...
+        UserDAOImpl userDAO = applicationContext.getBean(UserDAOImpl.class);
+        userDAO.show(); //UserDAOImpl ...
+    }
+```
+
+**配置文件确定扫描范围**
+
+- 基本扫描配置
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.canvs.ioc.ioc01"/>
+</beans>
+```
+
+- 指定排除组件
+
+```xml
+    <context:component-scan base-package="com.canvs.ioc.ioc01">
+        <!-- context:exclude-filter标签：指定排除规则 -->
+        <!-- type属性：指定根据什么来进行排除，annotation取值表示根据注解来排除 -->
+        <!-- expression属性：指定排除规则的表达式，对于注解来说指定全类名即可 -->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+```
+
+- 指定扫描组件
+
+```xml
+<!-- use-default-filters属性：取值false表示关闭默认扫描规则 -->
+<context:component-scan base-package="com.canvs.ioc.ioc0" use-default-filters="false">
+    
+    <!-- context:include-filter标签：指定在原有扫描规则的基础上追加的规则 -->
+    <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+</context:component-scan>
+```
+
+**组件BeanName问题**
+
+在使用xml方式管理bean的时候，每一个bean都有一个唯一标识id属性的值，便于在其他地方引用。现在使用注解后，每个组件仍然应该有一个唯一标识
+
+默认情况：类名首字母小写就是bean的id；如：UserController类对应的bean的id就是userController
+
+使用value属性指定
+
+```java
+@Controller(value = "student")	//当注解中只是设置一个属性时，value属性的属性名可以省略
+public class StudentController {
+}
+```
+
+总结：
+
+- 注解方式IOC只是标记了那些类要被Spring管理
