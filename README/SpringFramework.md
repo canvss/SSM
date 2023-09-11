@@ -1917,3 +1917,388 @@ public class Junit5IntegrationTest {
 }
 ```
 
+### Spring AOP面向切面编程
+
+#### 场景设定问题复线
+
+```java
+public interface Calculator {
+    int add(int i,int j);
+    int sub(int i,int j);
+    int mul(int i,int j);
+    int div(int i,int j);
+}
+```
+
+每个方法中，添加控制台输出
+
+```java
+public class CalculatorImpl implements Calculator {
+    @Override
+    public int add(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        int result = i + j;
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int sub(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        int result = i - j;
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int mul(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        int result = i * j;
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int div(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        int result = i / j;
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+}
+```
+
+**代码问题分析**
+
+- 代码缺陷
+  - 对核心业务功能有干扰，导致开发人员在开发核心业务功能时分散了精力
+  - 附加功能代码重复，分散在各个业务功能方法中；冗余，且不方便统一维护
+- 解决思路
+  - 解耦：需要吧附加功能从业务功能代码中抽取出来
+  - 将重复的代码统一提取，并且动态插入到每个业务方法
+
+#### 代理模式
+
+二十三种设计模式的一种，属于结构型模式。它的作用就是通过提供一个代理类，让我们在调用目标方法的时候，不再是直接对目标方法进行调用，而是通过代理间接调用。让不属于目标方法核心逻辑的代码从目标方法中剥离出来----解耦合。调用目标方法时先调用代码对象的方法，减少对目标方法的调用和打扰，同时让附加功能能够集中在一起也有利于统一维护
+
+**静态代理**
+
+```java
+public class CalculatorImpl implements Calculator {
+    @Override
+    public int add(int i, int j) {
+        return i + j;
+    }
+
+    @Override
+    public int sub(int i, int j) {
+        return i - j;
+    }
+
+    @Override
+    public int mul(int i, int j) {
+        return i * j;
+    }
+
+    @Override
+    public int div(int i, int j) {
+        return i / j;
+    }
+}
+```
+
+```java
+public class CalculatorStaticProxy implements Calculator {
+    private Calculator calculator;
+    private int result;
+    public CalculatorStaticProxy(Calculator calculator) {
+        this.calculator = calculator;
+    }
+    @Override
+    public int add(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        result = calculator.add(i, j);
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int sub(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        result = calculator.sub(i, j);
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int mul(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        result = calculator.mul(i, j);
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+    @Override
+    public int div(int i, int j) {
+        System.out.println("参数是：" + i + "," + j);
+        result = calculator.div(i, j);
+        System.out.println("方法内部 result = " + result);
+        return result;
+    }
+}
+```
+
+静态代理实现了解耦，但是由于代码都写死了，完全不具备任何的灵活性。将来其他地方也需要附加这个功能，还需要在声明更多个静态代理类，就产生了大量的重复代码，功能还是分散的，没有统一管理
+
+将功能集中到一个代理类中，将来有任何此功能需求，都通过这个代理类来实现。这就需要动态代理技术。
+
+**动态代理**
+
+分类：
+
+- JDK动态代理：JDK原生的实现方式，需要被代理的目标类必须实现接口。它会根据目标类的接口动态生成一个代理对象，代理对象和目标对象有相同的接口
+- cglib：通过继承被代理的目标类实现代理，所以不需要目标类实现接口
+
+**JDK动态代理**
+
+```java
+public class ProxyFactory {
+    private Object target;
+    public ProxyFactory(Object target){
+        this.target = target;
+    }
+    public Object getProxy(){
+        //加载动态生成的代理类的类加载器
+        ClassLoader classLoader = target.getClass().getClassLoader();
+        //目标对象实现的所有接口的class对象所组成的数组
+        Class<?>[] interfaces = target.getClass().getInterfaces();
+        //invocationHandler：设置代理对象实现目标对象方法的过程，即代理类中如何重写接口中的抽象方法
+        InvocationHandler invocationHandler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                Object result = null;
+                try {
+                    System.out.println("[动态代理][日志] "+method.getName()+"，参数："+ Arrays.toString(args));
+                    result = method.invoke(target, args);
+                    System.out.println("[动态代理][日志] "+method.getName()+"，结果："+ result);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.out.println("[动态代理][日志] "+method.getName()+"，异常："+e.getMessage());
+                } finally {
+                    System.out.println("[动态代理][日志] "+method.getName()+"，方法执行完毕");
+                }
+                return result;
+            }
+        };
+        return Proxy.newProxyInstance(classLoader,interfaces,invocationHandler);
+    }
+}
+```
+
+```java
+    public void test02(){
+        ProxyFactory proxyFactory = new ProxyFactory(new CalculatorImpl());
+        Calculator calculator = (Calculator) proxyFactory.getProxy();
+        calculator.add(2,3);
+    }
+```
+
+#### 面向切面编程思维（AOP）
+
+AOP：Aspect Oriented Programming面向切面编程
+
+AOP可以说是OOP（Object Oriented Programming，面向对象编程）的补充和完善。OOP引入封装、继承、多态等概念来建立一种对象层次结构，用于模拟公共行为的一个集合。不过OOP允许开发人员定义纵向的关系，但不适合定义横向的关系。如代理往往横向地散步在所有对象层次中，而与它对应的对象的核心功能毫无关系对于其他类型的代码。如代码安全性、异常处理和透明的持续性也都是如此。这种散布在各处的无关代码被称为横切（cross cutting），在OOP设计中，它导致了大量代码的重复，而不利各个模块重复利用。
+
+AOP恰恰相反，它利用了一种称为横切的技术，剖解开封装的对象内部，并将那些影响了多个类的公共行为封装到一个可重用模块，并将其命名为Aspect，即切面。所谓切面。简单说就是那些与业务无关，却为业务模块所共同调用的逻辑封装起来，便于减少系统的重复代码，降低模块之间的耦合度，并有利于未来的可操作性和可维护性。
+
+**AOP思想主要应用场景**
+
+AOP（面向切面编程）是一种编程范式，它通过将通用的横切关注点（如日志、事务、权限控制等）与业务逻辑分离，即使得代码更加清晰、简介、便于维护。AOP可以应用于各种场景。
+
+- 日志记录：在系统中记录日志是非常重要的，可以使用AOP来实现日志记录的功能，可以在方法执行前、执行后或异常抛出时记录日志
+- 事务处理：在数据库操作中使用事务可以保证数据的一致性，可以使用AOP来实现事务处理的功能，可以在方法开始前开启事务，在方法执行完毕后提交或回滚事务
+- 安全控制：在系统中包含某些需要安全控制的操作。如登录、修改密码、授权等，可以使用AOP来实现安全控制的功能。可以在方法执行前进行权限判断，如果用户没有权限，则抛出异常或转向到错误业务，以防止未经授权的访问
+- 性能监控：在系统运行过程中，有时需要对某些方法的性能进行监控，以找到系统的瓶颈并进行优化。可以使用AOP来实现性能监控的功能，可以在方法执行前记录时间戳，在方法执行完毕后计算方法执行时间并输出到日志中
+- 异常处理：系统中可能出现各种异常情况，如空指针、数据库连接等异常，可以使用AOP来实现异常处理的功能，在方法执行过程中，如果出现异常，则进行异常处理（如记录日志、发送邮件等）
+- 缓存控制：在系统中有些数据可以缓存起来以提高访问数独，可以使用AOP来实现缓存控制的功能，可以在方法执行前查询缓存中是否有数据，如果有则返回，否则执行方法并将返回值存入缓存中
+- 动态代理：AOP的实现方法之一是通过动态代理，可以代理某个类的所有方法，用于实现各种功能。
+
+> AOP可以应用于各种场景，它的作用是将通过的横切关注点与业务逻辑分离，使得代码更加清晰、简介、易于维护
+
+**AOP术语名词介绍**
+
+- 横切关注点：
+  - 从每个方法中抽取出来的同一类非核心业务。在同一个项目中，我们可以使用多个横切点对相关方法进行多个不同方面的增强。有十个附加功能，就有十个横切关注点
+  - AOP把软件系统分为两个部分：核心关注点和横切关注点。业务处理的主要流程是核心关注点，与之关系不大的部分是横切关注点。横切关注点的一个特点是，它们经常发生在核心关注点的多处，而各处基本相似，如权限认证、日志、事务、异常等。AOP的作用在与分离系统中的各个关注点，将核心关注点和横切关注点分离开来
+- 通知（增强）：每一个横切关注点上要做的事情都需要写一个方法来实现，这样的方法就叫通知方法
+  - 前置通知：在被代理的目标方法前执行
+  - 返回通知：在被代理的目标方法成功结束后执行
+  - 异常通知：在被代理的目标方法异常结束后执行
+  - 后置通知：在被代理目标方法最终结束后执行
+  - 环绕通知：使用try...catch...finally结构围绕整个被代理的目标方法，包括上面四个通知对应的所有位置
+- 连接点joinpoint：指那些被拦截到的点。在Spring中，可以被动态代理拦截目标类的方法
+- 切入点pointcut：定位连接点的方式，或者可以理解成被选中的连接点
+- 切面aspect：切入点和通知的结合。是一个类
+- 目标target：被代理的目标对象
+- 代理proxy：向目标对象应用通知之后创建的代理对象
+- 织入weave：指把通知应用到目标上，生成代理对象的过程。可以在编译器织入，Spring采用后者
+
+### Spring AOP基于注解方式实现和细节
+
+#### 初步实现
+
+加入依赖
+
+```xml
+<!-- spring-aspects会帮我们传递过来aspectjweaver -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aop</artifactId>
+    <version>6.0.6</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aspects</artifactId>
+    <version>6.0.6</version>
+</dependency>
+```
+
+接口
+
+```java
+public interface Calculator {
+    int add(int i,int j);
+    int sub(int i,int j);
+    int mul(int i,int j);
+    int div(int i,int j);
+}
+```
+
+实现类
+
+```java
+@Component
+public class CalculatorImpl implements Calculator {
+    @Override
+    public int add(int i, int j) {
+        return i + j;
+    }
+    @Override
+    public int sub(int i, int j) {
+        return i - j;
+    }
+    @Override
+    public int mul(int i, int j) {
+        return i * j;
+    }
+    @Override
+    public int div(int i, int j) {
+        return i / j;
+    }
+}
+```
+
+声明切面
+
+```java
+@Aspect //表示这个类是一个切面类
+@Component
+public class LogAspect {
+    @Before(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))")
+    public void printLogBeforeCore(){
+        System.out.println("[AOP前置通知] 方法开始了");
+    }
+    @AfterReturning(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))")
+    public void printLogAfterSuccess(){
+        System.out.println("[AOP返回通知] 方法成功返回了");
+    }
+    @AfterThrowing(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))")
+    public void printLogAfterException(){
+        System.out.println("[AOP异常通知] 方法抛异常了");
+    }
+    @After(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))")
+    public void printLogFinallyEnd(){
+        System.out.println("[AOP后置通知] 方法最终结束了");
+    }
+}
+```
+
+配置类
+
+```java
+@Configuration
+@ComponentScan(basePackages="com.canvs.aop.aop02")
+@EnableAspectJAutoProxy //等于<aop:aspectj-autoproxy/> 开启Aspectj注解支持
+public class CalculatorConfig {
+
+}
+```
+
+测试
+
+```java
+@SpringJUnitConfig(value = {CalculatorConfig.class})
+public class CalculatorImplTest2 {
+    @Resource
+    private Calculator calculator;
+    @Test
+    public void test() {
+        System.out.println(calculator.add(1, 2));
+    }
+}
+```
+
+```shell
+[AOP前置通知] 方法开始了
+[AOP返回通知] 方法成功返回了
+[AOP后置通知] 方法最终结束了
+3
+```
+
+#### 获取通知细节信息
+
+**JointPoint接口**：需要获取方法签名、传入的实参等信息时，可以在通知方法声明JoinPoint类型的形参数
+
+- JoinPoint接口通过getSignature()方法获取目标方法的签名（方法声明时的完整信息）
+- 通过目标方法签名对象获取方法名
+- 通过JoinPoint对象获取外界调用目标方法时传入的实参列表组成的数组
+
+```java
+    @Before(value = "execution(public int 								com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))")
+    public void printLogBeforeCore(JoinPoint joinPoint) {
+        Signature signature = joinPoint.getSignature();
+        String signatureName = signature.getName();
+        System.out.println("method = " + signatureName);
+        int modifiers = signature.getModifiers();
+        System.out.println("modifiers = " + modifiers);
+        String declaringTypeName = signature.getDeclaringTypeName();
+        System.out.println("declaringTypeName = " + declaringTypeName);
+        Object[] args = joinPoint.getArgs();
+        System.out.println("args = " + Arrays.toString(args));
+        System.out.println("[AOP前置通知] " + signatureName + "开始了");
+
+    }
+```
+
+**方法返回值**
+
+在返回通知中，通过@AfterReturning注解的returning属性获取目标方法的返回值
+
+```java
+    @AfterReturning(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.add(int,int))",returning = "tar")
+    public void printLogAfterSuccess(JoinPoint joinPoint,Object tar) {
+        String methodName = joinPoint.getSignature().getName();
+        System.out.println("[AOP返回通知] "+methodName+" 方法成功返回了,返回值是 "+tar);
+
+    }
+```
+
+**异常对象捕捉**
+
+在异常通知中，通过@AfterThrowing注解的throwing属性获取目标方法抛出的异常对象
+
+```java
+  @AfterThrowing(value = "execution(public int com.canvs.aop.aop02.impl.CalculatorImpl.div(int,int))" ,throwing = "t")
+    public void printLogAfterException(JoinPoint joinPoint,Throwable t) {
+        String methodName = joinPoint.getSignature().getName();
+
+        System.out.println("[AOP异常通知] "+methodName+"方法抛异常了，异常类型是：" + t.getClass().getName());
+    }
+```
+
