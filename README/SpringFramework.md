@@ -2302,3 +2302,770 @@ public class CalculatorImplTest2 {
     }
 ```
 
+#### 切点表达式语法
+
+AOP切点表达式（Pointcut Expression）是一种用于指定切点的语言，它可以通过定义匹配规则，来选择需要被切入的目标对象
+
+![](imgs/163651615681612.png)
+
+```tex
+1.查询某包某类下，访问修饰符是公有，返回值是int的全部方法
+execution(public int * * (..))
+2.查询某包下类中第一个参数是String的方法
+execution(* *.* (String,..))
+3.查询全部包下，无参数的方法！
+execution(* *.* ())
+4.查询com包下，以int参数类型结尾的方法
+execution(* com.* * (..,int))
+5.查询指定包下，Service开头类的私有返回值int的无参数方法
+execution(private int com.canvs.Service*.*())
+```
+
+#### 提取切点表达式
+
+```java
+@Aspect //表示这个类是一个切面类
+@Component
+public class LogAspect {
+    @Pointcut(value = "execution(public int com.canvs.aop.aop03.impl.CalculatorImpl.*(int,int))")
+    public void declarPointCut(){}
+  	//同一类内部引用
+    @Before(value = "declarPointCut()")
+    public void printLogBeforeCore(JoinPoint joinPoint) {
+        Signature signature = joinPoint.getSignature();
+        String signatureName = signature.getName();
+        System.out.println("method = " + signatureName);
+        int modifiers = signature.getModifiers();
+        System.out.println("modifiers = " + modifiers);
+        String declaringTypeName = signature.getDeclaringTypeName();
+        System.out.println("declaringTypeName = " + declaringTypeName);
+        Object[] args = joinPoint.getArgs();
+        System.out.println("args = " + Arrays.toString(args));
+        System.out.println("[AOP前置通知] " + signatureName + "开始了");
+
+    }
+		//不同类中引用
+    @AfterReturning(value = "com.canvs.aop.aop03.LogAspect.declarPointCut()",returning = "tar")
+    public void printLogAfterSuccess(JoinPoint joinPoint,Object tar) {
+        String methodName = joinPoint.getSignature().getName();
+        System.out.println("[AOP返回通知] "+methodName+" 方法成功返回了,返回值是 "+tar);
+
+    }
+}
+```
+
+**切点统一管理**
+
+```java
+@Component
+public class MyPointCut {
+    @Pointcut(value = "execution(public int com.canvs.aop..*.*(..))")
+    public void globalPointCut(){}
+    @Pointcut(value = "execution(* *.*.*.*(..,int))")
+    public void secondPointCut(){}
+    @Pointcut(value = "execution(private void com.canvs..*.*Impl.*(..))")
+    public void transactionPointCut(){}
+}
+```
+
+> 建议：将切点表达式统一存储到一个类中进行集中管理和维护
+
+#### 环绕通知
+
+环绕通知对应整个try...catch...finally结构，包括前面四种通知的所有功能。
+
+```java
+@Component
+public class ManageTransaction {
+    //通过在通知方法行参位置声明ProceedingJoinPoint类型的形参。Spring会将这个类型的对象传给我们
+    public Object manageTransaction(ProceedingJoinPoint joinPoint){
+        Object[] args = joinPoint.getArgs();
+        Object result = null;
+        try{
+            System.out.println("开启事务"); //before
+            //过ProceedingJoinPoint对象调用目标方法
+            //目标方法的返回值一定要返回给外界调用者
+            result = joinPoint.proceed(args);
+            System.out.println("提交");   //AfterReturning
+        }catch (Throwable e){
+            System.out.println("事务回滚"); //AfterThrowing
+            throw  new RuntimeException(e);
+        }finally {
+            System.out.println("结束。。。");    //After
+        }
+        return result;
+    }
+}
+```
+
+#### 切面优先级设置
+
+相同目标方法上同时存在多个切面时，切面的优先级控制的内外嵌套顺序。
+
+- 优先级高的切面：外面
+- 优先级低的切面：里面
+
+使用@Order注解可以控制切面的优先级
+
+- @Order(较小的书)：优先级高
+- @Order(较大的书)：优先级低
+
+#### CGlib动态代理生效
+
+- 如果目标类有接口，自动选择使用JDK动态代理
+- 如果目标类没有接口，自动选择cglib动态代理
+- 如果有接口，接口接值
+- 如果没有接口，类进行接值
+
+#### Spring AOP基于XML方法实现
+
+```java
+public interface Calculator {
+    int add(int i,int j);
+    int sub(int i,int j);
+    int mul(int i,int j);
+    int div(int i,int j);
+}
+@Component
+public class CalculatorImpl implements Calculator {
+    @Override
+    public int add(int i, int j) {
+        return i + j;
+    }
+    @Override
+    public int sub(int i, int j) {
+        return i - j;
+    }
+    @Override
+    public int mul(int i, int j) {
+        return i * j;
+    }
+    @Override
+    public int div(int i, int j) {
+        return i / j;
+    }
+}
+```
+
+```java
+@Component
+public class LogAspect {
+    public void printLogBeforeCore(JoinPoint joinPoint) {
+        Signature signature = joinPoint.getSignature();
+        String signatureName = signature.getName();
+        System.out.println("method = " + signatureName);
+        int modifiers = signature.getModifiers();
+        System.out.println("modifiers = " + modifiers);
+        String declaringTypeName = signature.getDeclaringTypeName();
+        System.out.println("declaringTypeName = " + declaringTypeName);
+        Object[] args = joinPoint.getArgs();
+        System.out.println("args = " + Arrays.toString(args));
+        System.out.println("[AOP前置通知] " + signatureName + "开始了");
+
+    }
+
+    public void printLogAfterSuccess(JoinPoint joinPoint,Object tar) {
+        String methodName = joinPoint.getSignature().getName();
+        System.out.println("[AOP返回通知] "+methodName+" 方法成功返回了,返回值是 "+tar);
+
+    }
+
+    public void printLogAfterException(JoinPoint joinPoint,Throwable t) {
+        String methodName = joinPoint.getSignature().getName();
+
+        System.out.println("[AOP异常通知] "+methodName+"方法抛异常了，异常类型是：" + t.getClass().getName());
+    }
+
+    public void printLogFinallyEnd() {
+        System.out.println("[AOP后置通知] 方法最终结束了");
+    }
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+    <context:component-scan base-package="com.canvs.aop.aop04"/>
+    <aop:aspectj-autoproxy/>
+    <aop:config>
+        <!--  配置切入点表达式 -->
+        <aop:pointcut id="logPointCut" expression="execution(public int com.canvs.aop.aop04.impl.CalculatorImpl.*(..))"/>
+        <aop:aspect ref="logAspect">
+            <aop:before method="printLogBeforeCore" pointcut-ref="logPointCut"/>
+            <aop:after-returning method="printLogAfterSuccess" pointcut-ref="logPointCut" returning="tar"/>
+            <aop:after-throwing method="printLogAfterException" pointcut-ref="logPointCut" throwing="t"/>
+            <aop:after method="printLogFinallyEnd" pointcut-ref="logPointCut"/>
+        </aop:aspect>
+    </aop:config>
+</beans>
+```
+
+```java
+@SpringJUnitConfig(locations = "classpath:Spring-aop.xml")
+public class CalculatorImplTest4 {
+    @Resource
+    private Calculator calculator;
+    @Test
+    public void test() {
+        System.out.println(calculator.add(1, 2));
+        calculator.div(3,0);
+    }
+}
+```
+
+
+
+### Spring 声明式事务
+
+#### 编程式事务
+
+编程式事务是指手动编写程序来管理事务，即通过编写代码的方式直接控制事务的提交和回滚。在Java中，通常使用事务管理器（如Spring中的PlatformTransactionManager）来实现编程式事务
+
+编程事务的主要优点是灵活性高，可以按照自己的需求来控制事务的力度、模式等。但是编写大量的事务控制代码容易出现问题，对代码的可读性和可维护性有一定的影响。
+
+```java
+Connection conn = ...;
+  
+try {
+    // 开启事务：关闭事务的自动提交
+    conn.setAutoCommit(false);
+    // 核心操作
+    // 业务代码
+    // 提交事务
+    conn.commit();
+  
+}catch(Exception e){
+  
+    // 回滚事务
+    conn.rollBack();
+  
+}finally{
+  
+    // 释放数据库连接
+    conn.close();
+  
+}
+```
+
+编程式的实现方式存在缺陷：
+
+- 细节没有屏蔽：具体操作过程中，所有细节都需要开发人员自己来完成，比较繁琐
+- 代码复用性不高：如果没有有效抽取出来，每次实现功能都需要自己编写代码，代码就没有复用
+
+#### 声明式事务
+
+声明式事务是指使用注解或XML配置的方法控制事务的提交和回滚。
+
+开发者只需要添加配置即可，具体事务的实现由第三方框架实现，避免我们直接进行事务操作
+
+使用声明式事务可以将事务的控制和业务逻辑分离开来，提高代码的可读性和可维护性
+
+#### Spring事务管理器
+
+- Spring声明式事务对应依赖
+  - spring-tx：包含声明式事务实现的基本规范（事务管理器规范接口和事务增强等）
+  - spring-jdbc：包含DataSource方式事务管理器实现类DataSourceTransactionManager
+  - spring-orm：包含其他持久化层框架的事务管理器实现类如：Hibernate/Jpa等
+- Spring声明式事务对应事务管理器接口
+
+![](imgs/456154516548.png)
+
+org.springframework.jdbc.datasource.DataSourceTransactionManager将来整合JDBC方式、JdbcTemplate方法、Mybatis方式的事务实现
+
+DataSourceTransactionManager类主要的方法：
+
+- doBegin()：开启事务
+- doSuspend()：挂起事务
+- doResume()：恢复挂起的事务
+- doCommit()：提交事务
+- doRollback()：回滚事务
+
+### 基于注解的声明式事务
+
+#### 准备工作
+
+依赖导入
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.canvs</groupId>
+    <artifactId>spring-tx</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <dependencies>
+        <!--当你引入Spring Context依赖之后，表示将Spring的基础依赖引入了-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+        <!--junit5测试-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>6.0.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <!-- 数据库驱动和连接池-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.25</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.2.8</version>
+        </dependency>
+        <!-- spring-jdbc -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+        <!-- 声明式事务依赖-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+jdbc.properties配置文件
+
+```properties
+url=jdbc:mysql://127.0.0.1:3306/studb
+driver=com.mysql.cj.jdbc.Driver
+username=root
+password=canvs
+```
+
+Spring配置类文件
+
+```java
+@ComponentScan(basePackages = "com.canvs.tx")
+@Configuration
+@PropertySource("classpath:druid.properties")
+public class SpringTXConfig {
+    @Value("${url}")
+    private String url;
+    @Value("${driver}")
+    private String driver;
+    @Value("${username}")
+    private String username;
+    @Value("${password}")
+    private String password;
+
+    @Bean
+    public DruidDataSource druidDataSource(){
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setUrl(url);
+        druidDataSource.setDriverClassName(driver);
+        druidDataSource.setUsername(username);
+        druidDataSource.setPassword(password);
+        return druidDataSource;
+    }
+
+    @Bean
+    public JdbcTemplate jdbcTemplate(DruidDataSource druidDataSource){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(druidDataSource);
+        return jdbcTemplate;
+    }
+}
+```
+
+DAO层
+
+```java
+public interface StudentDAO {
+    void updateNameById(String name,int id);
+    void updateAgeById(int age,int id);
+}
+
+@Repository
+public class StudentDAOImpl implements StudentDAO {
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    @Override
+    public void updateNameById(String name, int id) {
+        String sql = "UPDATE students SET name = ? WHERE id = ?";
+        jdbcTemplate.update(sql,name,id);
+    }
+
+    @Override
+    public void updateAgeById(int age, int id) {
+        String sql = "UPDATE students SET age = ? WHERE id = ?";
+        jdbcTemplate.update(sql,age,id);
+    }
+}
+```
+
+Serivce层
+
+```java
+@Service
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+    public void changeInfo(){
+        studentDAO.updateNameById("tom",1);
+        studentDAO.updateAgeById(30,1);
+        System.out.println("over!");
+    }
+}
+```
+
+测试
+
+```java
+@SpringJUnitConfig(value = {SpringTXConfig.class})
+public class SpringTXTest {
+    @Autowired
+    private StudentSerivce studentSerivce;
+
+    @Test
+    public void test(){
+        studentSerivce.changeInfo();
+    }
+}
+```
+
+#### 基本事务控制
+
+配置事务管理器
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.canvs.tx")
+@PropertySource("classpath:druid.properties")
+@EnableTransactionManagement
+public class SpringTXConfig {
+    @Value("${url}")
+    private String url;
+    @Value("${driver}")
+    private String driver;
+    @Value("${username}")
+    private String username;
+    @Value("${password}")
+    private String password;
+
+    @Bean
+    public DruidDataSource druidDataSource(){
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setUrl(url);
+        druidDataSource.setDriverClassName(driver);
+        druidDataSource.setUsername(username);
+        druidDataSource.setPassword(password);
+        return druidDataSource;
+    }
+
+    @Bean
+    public JdbcTemplate jdbcTemplate(DruidDataSource druidDataSource){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(druidDataSource);
+        return jdbcTemplate;
+    }
+    //装配事务管理实现对象
+    @Bean
+    public DataSourceTransactionManager dataSourceTransactionManager(DataSource druidDataSource){
+        return new DataSourceTransactionManager(druidDataSource);
+    }
+}
+```
+
+使用声明式事务注解@Transactional
+
+```java
+@Service
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+    @Transactional  //使用声明式注解
+    public void changeInfo(){
+        studentDAO.updateNameById("tom",3);
+        int i = 1/0;    //模拟异常
+        studentDAO.updateAgeById(30,3);
+        System.out.println("over!");
+    }
+}
+//数据库内容没有修改
+```
+
+#### 事务属性：只读
+
+对于一个查询操作，如果我们把它设置成只读，就能够明确告诉数据库，这个操作不涉及写操作。这样数据库就能够针对查询操作来进行优化。
+
+设置方式：@Transactional(readOnly=true) ；默认是false
+
+```java
+    @Transactional(readOnly = true) //默认为false
+    public void showStudentById(){
+        Student student = studentDAO.getStudentById(1);
+        System.out.println(student);
+    }
+```
+
+针对DML动作设置只读模式
+
+```java
+Caused by: java.sql.SQLException: Connection is read-only. Queries leading to data modification are not allowed
+```
+
+**@Transactional注解放在类上**
+
+- 生效原则
+
+  如果一个类中每个方法都适用了@Transactional注解，那么就可以将@Transactional注解提取到类上。反过来@Transactional注解在类级别标记，会影响到类中的每一个方法。同时，类级别标记的@Transactional注解中设置的事务属性也会延续影响到方法执行时的事务属性。除非在方法上又设置了@Transactional注解
+
+  对于一个方法来说离它最近的@Transactional注解中的事务属性设置生效
+
+- 在类级别@Transactional注解中设置只读，这样类中所有的查询方法都不需要设置@Transactional注解。因为对查询操作来说，其他属性通常不需要设置，所以使用公共设置即可
+
+- 然后在这个基础上，对增删改方法设置@Transactional注解readOnly属性为false
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+    @Transactional(readOnly = false)  //使用声明式注解
+    public void changeInfo(){
+        studentDAO.updateNameById("tom",3);
+        int i = 1/0;    //模拟异常
+        studentDAO.updateAgeById(30,3);
+        System.out.println("over!");
+    }
+
+    //@Transactional(readOnly = true) //默认为false
+    public void showStudentById(){
+        Student student = studentDAO.getStudentById(1);
+        System.out.println(student);
+    }
+}
+```
+
+#### 事务属性：超时时间
+
+事务在执行过程中，有可能因为遇到某些问题，导致程序卡住，从而长时间占用数据库资源。而长时间占用资源，大概率是因为程序运行出现了问题。可能是Java程序或MySQL数据库或网络连接等。
+
+此时这个很可能出现程序应该被回滚，撤销它已做的操作，事务结束，把资源让出来，让其他正常程序可以执行
+
+> 超过指定时间回滚，释放资源
+
+设置超时时间
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+    //timeout设置事务超时时长，单位秒，默认-1永不超时
+    @Transactional(readOnly = false,timeout = 3)  //使用声明式注解
+    public void changeInfo() throws InterruptedException {
+        studentDAO.updateNameById("tom",3);
+        Thread.sleep(4000); //休眠4s等待方法超时抛TransactionTimedOutException异常
+        studentDAO.updateAgeById(30,3);
+        System.out.println("over!");
+    }
+
+    //@Transactional(readOnly = true) //默认为false
+    public void showStudentById(){
+        Student student = studentDAO.getStudentById(1);
+        System.out.println(student);
+    }
+}
+```
+
+#### 事务属性：事务异常
+
+**默认情况**
+
+默认只针对运行时异常回滚，编译时异常不回滚。
+
+```java
+    //默认针对运行时异常回滚
+    @Transactional(readOnly = false,timeout = 3)  //使用声明式注解
+    public void changeInfo1() throws InterruptedException, FileNotFoundException {
+        studentDAO.updateNameById("tom",5);
+        new FileInputStream("asfafa");   //不会回滚
+        studentDAO.updateAgeById(30,5);
+        System.out.println("over!");
+    }
+```
+
+**设置回滚异常**
+
+rollbackFor属性：指定哪些异常类才会回滚，默认是RuntimeException and Error异常能回滚
+
+```java
+    @Transactional(readOnly = false,timeout = 3,rollbackFor = Exception.class)  //使用声明式注解
+    public void changeInfo1() throws InterruptedException, FileNotFoundException {
+        studentDAO.updateNameById("tom",5);
+        new FileInputStream("asfafa");   //不会回滚
+        studentDAO.updateAgeById(30,5);
+        System.out.println("over!");
+    }
+```
+
+**设置不回滚的异常**
+
+在默认设置和已有设置的基础上，再指定一个异常类型，遇到它不回滚 
+
+noRollbackFor属性：指定哪些异常不会回滚，默认没有指定，如果指定应该咋rollbackFor的范围内
+
+```java
+    @Transactional(readOnly = false,timeout = 3,rollbackFor = Exception.class,noRollbackFor = FileNotFoundException.class)  //使用声明式注解
+    public void changeInfo1() throws InterruptedException, FileNotFoundException {
+        studentDAO.updateNameById("tom",6);
+        new FileInputStream("asfafa");   //不会回滚
+        studentDAO.updateAgeById(30,6);
+        System.out.println("over!");
+    }
+```
+
+#### 事务属性：事务隔离级别
+
+数据库事务的隔离是指在多个事务并发执行时，数据库系统为了保证数据一致性所遵循的规定。
+
+常见的隔离级别
+
+- 读取提交（Read Uncommitted）：事务可以读取未被提交的数据，容易产生脏读、不可重复读和幻读等问题。实现简单但不太安全，一般不用。
+- 读已提交（Read Committed）：事务职能读取已经提交的数据，可以避免脏读问题，但可能引发不可重复读和幻读
+- 可重复读（Repeatable Read）：在一个事务中，相同的查询将返回相同的结果集，不管其他事务对数据做了什么修改。可以避免脏读和不可重复读，但仍有幻读的问题
+- 串行化（Serializable）：最高的隔离级别，完全禁止了并发，只允许一个事务执行完毕之后才能执行另一个事务。可以避免以上所有问题，但效率较低，不适用于高并发场景。
+
+**事务隔离级别设置**
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+    //timeout设置事务超时时长，单位秒，默认-1永不超时
+    @Transactional(readOnly = false,timeout = 3)  //使用声明式注解
+    public void changeInfo() throws InterruptedException {
+        studentDAO.updateNameById("tom",3);
+        Thread.sleep(4000); //休眠4s等待方法超时抛TransactionTimedOutException异常
+        studentDAO.updateAgeById(30,3);
+        System.out.println("over!");
+    }
+
+    //@Transactional(readOnly = true) //默认为false
+    public void showStudentById(){
+        Student student = studentDAO.getStudentById(1);
+        System.out.println(student);
+    }
+    //默认针对运行时异常回滚
+    //isolation = 设置事务的隔离级别,mysql默认是repeatable read!
+    @Transactional(readOnly = false,timeout = 3,rollbackFor = Exception.class,noRollbackFor = FileNotFoundException.class,isolation = Isolation.REPEATABLE_READ)  //使用声明式注解
+    public void changeInfo1() throws InterruptedException, FileNotFoundException {
+        studentDAO.updateNameById("tom",6);
+        new FileInputStream("asfafa");   //不会回滚
+        studentDAO.updateAgeById(30,6);
+        System.out.println("over!");
+    }
+}
+```
+
+#### 事务属性：事务传播行为
+
+propagation属性
+
+@Transactional注解通过propagation属性设置事务的传播行为。它的默认值是：
+
+```java
+Propagation propagation() default Propagation.REQUIRED;
+```
+
+propagation属性的可选值由org.springframework.transaction.annotation.Propagation 枚举类提供：
+
+| 名称           | 含义                                                   |
+| -------------- | ------------------------------------------------------ |
+| REQUIRED默认值 | 如果父方法有事务，就加入，如果没有就建立自己独立的事务 |
+| REQUIRES_NEW   | 不管方法是否有事务，都新建事务，都是独立的             |
+
+```java
+@Controller
+public class StudentController {
+    @Autowired
+    private StudentSerivce studentSerivce;
+    @Transactional
+    public void change(){
+        studentSerivce.changeAge();
+        studentSerivce.changeName();
+    }
+}
+```
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class StudentSerivce {
+    @Autowired
+    private StudentDAO studentDAO;
+   
+    @Transactional(readOnly = false,propagation = Propagation.REQUIRED)
+    public void changeAge(){
+        studentDAO.updateAgeById(10,1);
+    }
+    @Transactional(readOnly = false,propagation = Propagation.REQUIRED)
+    public void changeName(){
+        int i = 3/0;
+        studentDAO.updateNameById("canvs",1);
+    }
+}
+```
+
+```java
+    @Test
+    public void test1(){
+        studentController.change();
+    }
+```
+
+> 注意：
+>
+> 在同一个类中，对于@Transactional注解的方法调用，事务传播行为不会生效。这是因为Spring框架中使用代理模式实现了事务机制，在同一个类中的方法调用并不经过代理，而是通过对象的方法调用，因此@Transactional注解的设置不会被代理捕获，也就不会产生任何事物传播行为的效果
+
+**其他传播行为**
+
+- Propagation.REQUIRED：如果当前存在事务，则加入当前事务，否则创建一个新的事务
+- Propagation.REQUIRES_NEW：创建一个新的事务，并在新的事务中执行。如果当前存在事务，则挂起当前事务，即使新事务抛出异常，也不会影响当前事务。
+- Propagation.SUPPORTS：如果当前存在事务，则加入该事务，否则以非事务方式执行。
+- Propagation.MANDATORY：果当前存在事务，则加入该事务，否则以非事务
+- Propagation.NOT_SUPPORTED：以非事务方式执行，如果当前存在事务，挂起该事务。
+- Propagation.NESTED：如果当前存在事务，则在该事务中嵌套一个新事务，如果没有事务，则与Propagation.REQUIRED一样。
+- Propagation.NEVER：必须在没有事务的情况下执行，否则抛出异常。
