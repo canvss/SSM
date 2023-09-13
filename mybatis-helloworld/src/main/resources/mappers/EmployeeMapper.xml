@@ -4,10 +4,36 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- namespace等于mapper接口类的全限定名,这样实现对应 -->
 <mapper namespace="com.canvs.mapper.EmployeeMapper">
+    <resultMap id="EmployeeByRMResultMap" type="com.canvs.pojo.Employee">
+        <id column="emp_id" property="empId"/>
+        <id column="emp_name" property="empName"/>
+        <id column="emp_salary" property="empSalary"/>
+    </resultMap>
+
+    <select id="getEmployees" resultType="EmployeeByRMResultMap">
+        SELECT * empSalary FROM t_emp
+    </select>
+<!--    <select id="getEmployees" resultType="com.canvs.pojo.Employee">-->
+<!--        SELECT emp_id empId,emp_name empName,emp_salary empSalary FROM t_emp-->
+<!--    </select>-->
     <select id="getEmployeeById" resultType="com.canvs.pojo.Employee">
         SELECT emp_id empId,emp_name empName,emp_salary empSalary FROM t_emp WHERE emp_id = #{id}
     </select>
-    <select id="getEmployees" resultType="com.canvs.pojo.Employee">
-        SELECT emp_id empId,emp_name empName,emp_salary empSalary FROM t_emp
+    <insert id="insertEmployee" useGeneratedKeys="true" keyProperty="empId">
+        INSERT INTO t_emp(emp_name,emp_salary) VALUES(#{empName},#{empSalary})
+    </insert>
+    <update id="updateEmployee">
+        UPDATE t_emp SET emp_salary=#{empSalary} WHERE emp_id=#{empId}
+    </update>
+    <update id="updateEmployeeByMap">
+        UPDATE t_emp SET emp_salary=#{empSalary} WHERE emp_id=#{empId}
+    </update>
+    <select id="getEmployeeCount" resultType="int">
+        SELECT COUNT(*) FROM t_emp
+    </select>
+    <select id="getEmpNameAndMaxSalary" resultType="map">
+        SELECT emp_name,emp_salary FROM t_emp WHERE emp_salary IN (
+        SELECT max(emp_salary) FROM t_emp
+        )
     </select>
 </mapper>
