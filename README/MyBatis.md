@@ -549,3 +549,202 @@ resultMap标签定义对应关系，再在后面的SQL语句中引用这个对�
     </select>
 ```
 
+#### CRUD练习
+
+准备数据库
+
+```sql
+CREATE TABLE `user` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(50) NOT NULL,
+  `password` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+INSERT INTO user(username,password) VALUES("tom","123456"),("jerry","123456"),("andy","123456");
+```
+
+pom.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.canvs</groupId>
+    <artifactId>mybatis-crud</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <!-- mybatis依赖 -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.5.11</version>
+        </dependency>
+
+        <!-- MySQL驱动 mybatis底层依赖jdbc驱动实现,本次不需要导入连接池,mybatis自带! -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.25</version>
+        </dependency>
+
+        <!--junit5测试-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.3.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.28</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+实体pojo类
+
+```java
+@Data
+public class User {
+    private int id;
+    private String username;
+    private String password;
+}
+```
+
+Mapper接口
+
+```java
+public interface UserMapper {
+    int insert(User user);
+    int update(User user);
+    int delete(User user);
+    User selectById(int id);
+    List<User> selectAll();
+}
+```
+
+MapperXML
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.canvs.mapper.UserMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO user(username,password) VALUES(#{username},#{password})
+    </insert>
+    <update id="update">
+        UPDATE user SET username = #{username}, password = #{password} WHERE id = #{id}
+    </update>
+    <delete id="delete">
+        DELETE FROM user WHERE id = #{id};
+    </delete>
+    <select id="selectById" resultType="user">
+        SELECT * FROM user WHERE id = #{id};
+    </select>
+    <select id="selectAll" resultType="user">
+        SELECT * FROM user;
+    </select>
+</mapper>
+```
+
+mybatis.xml配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <typeAliases>
+        <package name="com.canvs.pojo"/>
+    </typeAliases>
+    <environments default="development">
+        <!-- environment表示配置Mybatis的一个具体的环境 -->
+        <environment id="development">
+            <!-- Mybatis的内置的事务管理器 -->
+            <transactionManager type="JDBC"/>
+            <!-- 配置数据源 -->
+            <dataSource type="POOLED">
+                <!-- 建立数据库连接的具体信息 -->
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/mybatis-example"/>
+                <property name="username" value="root"/>
+                <property name="password" value="canvs"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <mapper resource="com/canvs/mapper/UserMapper.xml" />
+    </mappers>
+</configuration>
+```
+
+测试
+
+```java
+public class UserMapperTest {
+    private SqlSession session;
+    @BeforeEach
+    public void start() throws IOException {
+        InputStream inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        session = sessionFactory.openSession();
+    }
+    @AfterEach
+    public void over() {
+        session.commit();
+        session.close();
+    }
+    @Test
+    public void insert() {
+        User user = new User();
+        user.setUsername("canvs");
+        user.setPassword("123456");
+        UserMapper userMapper = session.getMapper(UserMapper.class);
+        int id = userMapper.insert(user);
+        System.out.println(id);
+    }
+    @Test
+    public void update() {
+        User user = new User();
+        user.setId(1);
+        user.setUsername("canvs");
+        user.setPassword("canvs");
+        UserMapper userMapper = session.getMapper(UserMapper.class);
+        int row = userMapper.update(user);
+        System.out.println(row);
+    }
+    @Test
+    public void delete() {
+        UserMapper userMapper = session.getMapper(UserMapper.class);
+        User user = new User();
+        user.setId(1);
+        int row = userMapper.delete(user);
+        System.out.println(row);
+    }
+    @Test
+    public void selectById() {
+        UserMapper userMapper = session.getMapper(UserMapper.class);
+        User user = userMapper.selectById(3);
+        System.out.println(user);
+    }
+    @Test
+    public void selectAll() {
+        UserMapper userMapper = session.getMapper(UserMapper.class);
+        List<User> users = userMapper.selectAll();
+        users.forEach(System.out::println);
+    }
+}
+```
+
